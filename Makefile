@@ -2,4 +2,4 @@
 
 
 default:
-	./test02.lua 01.dvi
+	./test01.lua 01.dvi
