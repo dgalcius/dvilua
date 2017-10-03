@@ -1,11 +1,22 @@
 #!/usr/bin/env lua
 
+local inspect = require("inspect")
+local dvi = require("dvi")
 
-dvifile = arg[1]
-f = assert(io.open(dvifile, 'rb'))
+
+local dvifile = arg[1]
+local fh = assert(io.open(dvifile, 'rb'))
+
+print(assert(type(dvi.parse) == "function"))
+print(assert(type(dvi.opcodes) == "table"))
+
+-- local dv = dvi.parse(fh)
+-- local dv = dvi.unpack(fh)
+-- dvi.pack(fh,dv)
+os.exit()
 
 
-local function dvir(fh, BUFFER)
+local function dviread(fh, BUFFER)
    local i = f:read(BUFFER)
    return i
 end
@@ -19,11 +30,11 @@ local pre = {
    comment = nil,
 }
 function pre.read(f)
-   pre.version = dvir(f,1)
-   pre.num = dvir(f,4)
-   pre.den = dvir(f,4)
-   pre.mag = dvir(f,4)
-   pre.comment = dvir(f,string.byte(dvir(f,1)))
+   pre.version = dviread(f,1)
+   pre.num = dviread(f,4)
+   pre.den = dviread(f,4)
+   pre.mag = dviread(f,4)
+   pre.comment = dviread(f,string.byte(dviread(f,1)))
 end
 
 local bop = {
@@ -32,8 +43,8 @@ local bop = {
    p = nil,
 }
 function bop.read(f)
-   bop.c = dvir(f,4*10)
-   bop.p = dvir(f,4)
+   bop.c = dviread(f,4*10)
+   bop.p = dviread(f,4)
    end
 t = {}
 t[247] = pre
@@ -49,28 +60,28 @@ print(m:byte(1,-1))
 print(256*3+232)
 os.exit()
 
-i = dvir(f, 1)
+i = dviread(f, 1)
 print(i:byte())
 
 t[139].read(f)
 print(bop.p)
 
-i = dvir(f, 1)
+i = dvireas(f, 1)
 print(i:byte())
 
 os.exit()
 
 
 BUFFER = 1
-i = dvir(f, BUFFER)
+i = dviread(f, BUFFER)
 --print(string.byte(i))
-pre.version = dvir(f,1)
-pre.num = dvir(f,4)
-pre.den = dvir(f,4)
-pre.mag = dvir(f,4)
-pre.comment = dvir(f,string.byte(dvir(f,1)))
---size = dvir(f,1)
+pre.version = dviread(f,1)
+pre.num = dviread(f,4)
+pre.den = dviread(f,4)
+pre.mag = dviread(f,4)
+pre.comment = dviread(f,string.byte(dviread(f,1)))
+--size = dviread(f,1)
 --print(size:byte())
---comment = dvir(f,size:byte())
+--comment = dviread(f,size:byte())
 print(pre.comment)
 
