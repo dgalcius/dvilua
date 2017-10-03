@@ -2,13 +2,16 @@
 
 inspect = require("inspect")
 local dvi = require("dvi")
+--print("OK")
+--os.exit()
 
 local dvifilein = arg[1]
 local fh = assert(io.open(dvifilein, 'rb'))
 
 contents = dvi.parse(fh)
 --print(inspect(contents))
---print(inspect(dvi.opcodes.pre))
+print(inspect(dvi.opcodes.pre.range))
+
 
 os.exit()
 print(assert(type(dvi.parse) == "function"))

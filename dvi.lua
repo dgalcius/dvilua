@@ -8,22 +8,12 @@ function Dvi.parse(fh)
    t = {}
 
    for i, opcode in ipairs(opcodes.basic_opcodes) do
-      print(i, opcode)
-      print(type(opcode))
---      s = {"opcodes."..opcode..".range"}
---      code = [[ 
---        print(unpack(s)
---      ]]
---      print(s)
---      print(opcodes.pre.range)
---      x = loadstring(code)
---      x()
---      print(x())
-      -- assert(loadstring(s))(247)
-      -- TODO: pre == string
-      -- TODO: pre.range -> 247
---      os.exit()
-      break
+      x = "s = opcodes." .. opcode .. ".range"
+      print(x)
+      load(x)()
+--      print("Range: " .. s)
+      print(i, opcode, s)
+--      break
    end
    
    return c
@@ -34,7 +24,11 @@ function Dvi.dump(contents)
 end
 
 -- Dvi.opcodes.pre = opcodes.pre
-Dvi.opcodes = opcodes.basic_opcodes
+Dvi.basic_opcodes = opcodes.basic_opcodes
+Dvi.opcodes = {}
+Dvi.opcodes.pre = opcodes.pre
+Dvi.opcodes.post = opcodes.post
+Dvi.opcodes.bop = opcodes.bop
 
 
 return Dvi
