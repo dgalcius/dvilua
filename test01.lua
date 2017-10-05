@@ -9,9 +9,9 @@ local dvifilein = arg[1]
 local fh = assert(io.open(dvifilein, 'rb'))
 
 contents = dvi.parse(fh)
---print(inspect(contents))
-print(inspect(dvi.opcodes.pre.range))
-
+-- print(inspect(contents))
+-- print(inspect(dvi.opcodes.pre.range))
+print('=END=')
 
 os.exit()
 print(assert(type(dvi.parse) == "function"))

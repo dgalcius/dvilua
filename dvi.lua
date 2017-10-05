@@ -4,16 +4,32 @@ opcodes = require("dvilib/opcodes")
 
 function Dvi.parse(fh)
 --   print (inspect(opcodes))
-   c = {}
-   t = {}
+   local c, t = {}, {}
 
-   for i, opcode in ipairs(opcodes.basic_opcodes) do
-      x = "s = opcodes." .. opcode .. ".range"
-      print(x)
-      load(x)()
---      print("Range: " .. s)
-      print(i, opcode, s)
---      break
+   for _, opcode in pairs(opcodes.basic_opcodes) do
+      local x = "s = opcodes." .. opcode .. ".range"
+      load(x)() -- eval function
+      if type(s) == "table" then
+         for _, ss in pairs(s) do
+            t[ss] = opcode
+         end
+      else
+         t[s] = opcode
+      end
+   end
+-- inspect table t
+--[[
+   for i, j in pairs(t) do
+      print(i,j)
+   end
+ ]]
+
+
+   while true  do
+      cmd = fh:read(4)
+      print(cmd, string.byte(cmd))
+      print('.')
+      break
    end
    
    return c
