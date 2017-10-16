@@ -1,3 +1,5 @@
+ local byte = string.byte
+
 Opcodes = {}
 
 local pre = {
@@ -10,12 +12,14 @@ local pre = {
 }
 
 function pre.read(f)
-   pre.version = dviread(f,1)
-   pre.num = dviread(f,4)
-   pre.den = dviread(f,4)
-   pre.mag = dviread(f,4)
-   pre.comment = dviread(f,string.byte(dviread(f,1)))
+   version = read_uint1(f)
+   num = read_uint4(f)
+   den = read_uint4(f)
+   mag = read_uint4(f)
+   comment = f:read(byte(readbyte(f)))
+   return { _opcode = "pre", version = version, num = num, den = den, mag = mag, comment = comment }
 end
+
 
 local post = {
    range = 248,
@@ -41,8 +45,12 @@ local bop = {
 }
 
 function bop.read(f)
-   bop.c = dviread(f,4*10)
-   bop.p = dviread(f,4)
+   counters = {}
+   for i = 1, 10 do
+      table.insert(counters, read_uint4(f))
+   end
+   previous = read_uint4(f)
+   return { _opcode = "bop", counters = table.concat(counters), previous = previous }
 end
 
 local eop = {
@@ -52,6 +60,10 @@ local eop = {
 local push = {
    range = 141
 }
+
+function push.read(f)
+   return { _opcode = "push" }
+end
 
 local pop = {
    range = 142
@@ -92,6 +104,10 @@ local right = {
    range = {143, 144, 145, 146},
    size = nil,
 }
+function right.read(f)
+   size = register_read(f,cmd,142)
+   return { _opcode = "right", size = size }
+end
 
 local w0 = {
    range = 147
@@ -115,6 +131,15 @@ local down = {
    range = {157, 158, 159, 160},
    size = nil
 }
+
+function down.read(f, cmd)
+   size = register_read(f,cmd,156)
+   return { _opcode = "down", size = size }
+end
+
+function register_read(f,cmd,base)
+   return read_int[cmd - base](f)
+end
 
 local y0 = {
    range = 161
