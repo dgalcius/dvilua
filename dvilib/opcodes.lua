@@ -1,6 +1,14 @@
- local byte = string.byte
+local byte = string.byte
+local char = string.char
 
 Opcodes = {}
+
+function register_read(f,cmd,base)
+   return read_int[cmd - base](f)
+end
+
+-- local register_read = register_read
+
 
 local pre = {
    range = 247,
@@ -20,7 +28,6 @@ function pre.read(f)
    return { _opcode = "pre", version = version, num = num, den = den, mag = mag, comment = comment }
 end
 
-
 local post = {
    range = 248,
    final_bop = nil,
@@ -33,10 +40,40 @@ local post = {
    total_pages = nil  -- # total number of pages
 }
 
+function post.read(f)
+   final_bop = read_uint4(f)
+   num = read_uint4(f)
+   den = read_uint4(f)
+   mag = read_uint4(f)
+   l = read_uint4(f)
+   u = read_uint4(f)
+   stack_size = read_uint2(f)
+   total_pages = read_uint2(f)
+   return { _opcode = "post", final_bop = final_bop, num = num, den = den, mag = mag,
+            l = l , u = u,  stack_depth = stack_depth, total_pages = total_pages }
+end
+
+
 local postpost = {
    range = 249,
-   pointer = nil
+   pointer = nil,
+   version = nil, 
 }
+
+function postpost.read(f)
+   pointer = read_uint4(f)
+   version = read_uint1(f)
+   local trailing = {}
+   while true do
+      i = readbyte(f)
+      if i == nil then
+         break
+      end
+      assert(byte(i) == 223)
+      table.insert(trailing, byte(i))
+   end
+   return { _opcode = "postpost", pointer = pointer , version = version, trailing = trailing}
+end
 
 local bop = {
    range = 139,
@@ -49,13 +86,17 @@ function bop.read(f)
    for i = 1, 10 do
       table.insert(counters, read_uint4(f))
    end
-   previous = read_uint4(f)
-   return { _opcode = "bop", counters = table.concat(counters), previous = previous }
+   previous = read_int4(f)
+   return { _opcode = "bop", counters = counters, previous = previous }
 end
 
 local eop = {
    range = 140
 }
+
+function eop.read()
+   return { _opcode = "eop" }
+end
 
 local push = {
    range = 141
@@ -69,6 +110,11 @@ local pop = {
    range = 142
 }
 
+function pop.read()
+   return { _opcode = "pop" }
+end
+
+
 local put = {
    range = {133, 134, 135, 136},
    index = nil,
@@ -79,6 +125,13 @@ local putrule = {
    height = nil,
    width = nil
 }
+
+function putrule.read(f)
+   height = read_int4(f)
+   width  = read_int4(f)
+   return { _opcode = "putrule", height = height, width = width }
+end
+
 
 local set = {
    range = {128, 129, 130, 131},
@@ -97,8 +150,16 @@ local setrule = {
 local setchar = {
    range = {},
    index = nil,
+   zzz_char = nil, -- not necessary
 }
 for i = 0, 127 do table.insert(setchar.range, i) end
+
+function setchar.read(f, cmd)
+   index, zzz_char = cmd, char(cmd)
+   return { _opcode = "setchar", index = index , zzz_char = zzz_char}
+end
+
+
 
 local right = {
    range = {143, 144, 145, 146},
@@ -113,19 +174,38 @@ local w0 = {
    range = 147
 }
 
+function w0.read()
+   return { _opcode = "w0" }
+end
+
 local w = {
    range = {148, 149, 150, 151},
    size = nil
 }
 
+function w.read(f, cmd)
+   size = register_read(f,cmd,147)
+   return { _opcode = "w", size = size }
+end
+
 local x0 = {
    range = 152
 }
+
+function x0.read()
+   return { _opcode = "x0" }
+end
+
 
 local x = {
    range = {153, 154, 155, 156},
    size = nil
 }
+
+function x.read(f, cmd)
+   size = register_read(f,cmd,152)
+   return { _opcode = "x", size = size }
+end
 
 local down = {
    range = {157, 158, 159, 160},
@@ -137,32 +217,55 @@ function down.read(f, cmd)
    return { _opcode = "down", size = size }
 end
 
-function register_read(f,cmd,base)
-   return read_int[cmd - base](f)
-end
-
 local y0 = {
    range = 161
 }
+
+function y0.read()
+   return { _opcode = "y0" }
+end
 
 local y = {
    range = {162, 163, 164, 165},
    size = nil
 }
 
+function y.read(f, cmd)
+   size = register_read(f,cmd,161)
+   return { _opcode = "y", size = size }
+end
+
+
 local z0 = {
    range = 166
 }
+
+function z0.read()
+   return { _opcode = "z0" }
+end
+
 
 local z = {
    range = {167, 168, 169, 170},
    size = nil
 }
 
+function z.read(f, cmd)
+   size = register_read(f,cmd,166)
+   return { _opcode = "z", size = size }
+end
+
+
 local fntnum = {
-   range = {171, 172, 173, 174},
+   range = {},
    index = nil
 }
+for i = 171, 234 do table.insert(fntnum.range, i) end
+
+function fntnum.read(f, cmd)
+   index = cmd - 171
+   return { _opcode = "fntnum", index = index }
+end
 
 local fnt = {
    range = {235, 236, 237, 238},
@@ -184,6 +287,27 @@ local fntdef = {
    area = nil,
    fontname = nil
 }
+
+function fntdef.read(f, cmd)
+   n = cmd - 242
+   num = 0
+   if n < 4 then
+     num = read_uint[n](f)
+   else
+      num = read_int4(f)
+   end
+   checksum  = read_uint4(f)
+   scale = read_uint4(f)
+   design_size = read_int4(f)
+   a = read_uint1(f)
+   l = read_uint1(f)
+   area = f:read(a)
+   fontname = f:read(l)
+   return { _opcode = "fntdef", num = num, checksum = checksum, scale = scale,
+            design_size = design_size, area = area, fontname = fontname }
+end
+
+
 
 
 Opcodes.pre      = pre

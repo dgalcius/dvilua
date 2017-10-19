@@ -28,39 +28,16 @@ function Dvi.parse(fh)
    for i, j in pairs(t) do
       print(i,j)
    end
+   os.exit()
 --]]
-
-  local _i = 0
-  while true  do
-      _i = _i + 1
-      cmd = byte(readbyte(fh))
-      opcode = t[cmd]
-      print(opcode, cmd)
-      i = opcodes[opcode].read(fh,cmd)
-      table.insert(c, i)
---      print(inspect(i))
---      print(inspect(opcodes[opcode]))
---      print(type(i))
---      print(t[cmd].read(fh))
---      print(string.byte(cmd))
---[[
-      cmd = read_uint1(fh); print(cmd)
-      cmd = read_uint4(fh); print(cmd)
-      cmd = read_uint4(fh); print(cmd)
-      cmd = read_uint4(fh); print(cmd)
-      cmd = readbyte(fh); 
-      cmd = fh:read(string.byte(cmd)); print(cmd)
---]]
-      print('...')
----      cmd = readbyte
----      print(cmd, string.byte(cmd))
-      ---      print('.')
-      if _i == 11 then
-         break
-      end
+  _x = readbyte(fh)
+  while _x  do
+     cmd = byte(_x)
+     opcode = t[cmd]
+     table.insert(c, opcodes[opcode].read(fh,cmd))
+     _x = readbyte(fh)
   end
-   
-   return c
+  return c
 end
 
 function Dvi.dump(contents)

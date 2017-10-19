@@ -54,11 +54,7 @@ function read_int4(fh)
    return n
 end
 
-read_int = {
-   [1] = read_int1,
-   [2] = read_int2,
-   [3] = read_int3,
-   [4] = read_int4,
-}
+read_int  = { read_int1,  read_int2,  read_int3,  read_int4 }
+read_uint = { read_uint1, read_uint2, read_uint3, read_uint4 }
 
 return true
