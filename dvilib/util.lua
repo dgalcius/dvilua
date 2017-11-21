@@ -45,7 +45,6 @@ function read_int3(fh)
    return n
 end
 
-
 function read_int4(fh)
    local n = read_uint4(fh)
    if n >= 2147483648 then
@@ -54,7 +53,24 @@ function read_int4(fh)
    return n
 end
 
+function write_uint1(fh, x)
+   fh:write(string.char(x))
+   return 1
+end
+
+function write_uint4(fh, x)
+    local b4=string.char(x%256) x=(x-x%256)/256
+    local b3=string.char(x%256) x=(x-x%256)/256
+    local b2=string.char(x%256) x=(x-x%256)/256
+    local b1=string.char(x%256) x=(x-x%256)/256
+    fh:write(b1,b2,b3,b4)
+    return 4
+end
+
+
 read_int  = { read_int1,  read_int2,  read_int3,  read_int4 }
 read_uint = { read_uint1, read_uint2, read_uint3, read_uint4 }
+write_uint = { write_uint1, write_uint2, write_uint3, write_uint4 }
+write_int = { write_int1, write_int2, write_int3, write_int4 }
 
 return true
