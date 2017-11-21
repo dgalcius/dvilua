@@ -40,7 +40,11 @@ function Dvi.parse(fh)
   return c
 end
 
-function Dvi.dump(contents)
+function Dvi.dump(fh, contents)
+   --   print(inspect(contents[1]._opcode))
+   --print(inspect(contents[1]._opcode.write))
+   opcode_name, opcode_body  = contents[1]._opcode, contents[1]
+   opcodes[opcode_name].write(fh, opcode_body)
    return true
 end
 
