@@ -2,6 +2,7 @@ Opcodes = Opcodes or {}
 
 local byte = string.byte
 local char = string.char
+local length = string.len
 
 
 function register_read(f,cmd,base)
@@ -25,6 +26,18 @@ function pre.read(f)
    comment = f:read(byte(readbyte(f)))
    return { _opcode = "pre", version = version, num = num, den = den, mag = mag, comment = comment }
 end
+function pre.write(f, body)
+   local opcode = 247
+   write_uint1(f, opcode)
+   write_uint1(f, body.version)
+   write_uint4(f, body.num)
+   write_uint4(f, body.den)
+   write_uint4(f, body.mag)
+   write_uint1(f, length(body.comment))
+   f:write(body.comment)
+   return 1 + 1 + 4 + 4 + 4 + 1 + length(body.comment)
+end
+
 
 local post = {
    range = 248,
