@@ -1,6 +1,6 @@
-local byte = string.byte
+Dvi = Dvi or {}
 
-local Dvi = {}
+local byte = string.byte
 
 require("dvilib/util")
 opcodes = require("dvilib/opcodes")

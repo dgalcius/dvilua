@@ -1,14 +1,12 @@
+Opcodes = Opcodes or {}
+
 local byte = string.byte
 local char = string.char
 
-Opcodes = {}
 
 function register_read(f,cmd,base)
    return read_int[cmd - base](f)
 end
-
--- local register_read = register_read
-
 
 local pre = {
    range = 247,
@@ -52,7 +50,6 @@ function post.read(f)
    return { _opcode = "post", final_bop = final_bop, num = num, den = den, mag = mag,
             l = l , u = u,  stack_depth = stack_depth, total_pages = total_pages }
 end
-
 
 local postpost = {
    range = 249,
@@ -165,6 +162,7 @@ local right = {
    range = {143, 144, 145, 146},
    size = nil,
 }
+
 function right.read(f)
    size = register_read(f,cmd,142)
    return { _opcode = "right", size = size }
@@ -244,7 +242,6 @@ function z0.read()
    return { _opcode = "z0" }
 end
 
-
 local z = {
    range = {167, 168, 169, 170},
    size = nil
@@ -254,7 +251,6 @@ function z.read(f, cmd)
    size = register_read(f,cmd,166)
    return { _opcode = "z", size = size }
 end
-
 
 local fntnum = {
    range = {},
@@ -307,9 +303,6 @@ function fntdef.read(f, cmd)
             design_size = design_size, area = area, fontname = fontname }
 end
 
-
-
-
 Opcodes.pre      = pre
 Opcodes.post     = post
 Opcodes.postpost = postpost
@@ -336,17 +329,17 @@ Opcodes.z        = z
 Opcodes.fntnum   = fntnum
 Opcodes.fnt      = fnt
 Opcodes.fntdef   = fntdef
-
-
-Opcodes.basic_opcodes = {'pre', 'post', 'postpost',
-                         'bop', 'eop',
-                         'push', 'pop',
-                         'put', 'putrule',
-                         'set', 'setrule',
-                         'setchar', 'xxx',
-                         'right', 'w0', 'w', 'x0', 'x',
-                         'down', 'y0', 'y', 'z0', 'z',
-                         'fntnum', 'fnt', 'fntdef' }
+Opcodes.basic_opcodes = {
+   'pre', 'post', 'postpost',
+   'bop', 'eop',
+   'push', 'pop',
+   'put', 'putrule',
+   'set', 'setrule',
+   'setchar', 'xxx',
+   'right', 'w0', 'w', 'x0', 'x',
+   'down', 'y0', 'y', 'z0', 'z',
+   'fntnum', 'fnt', 'fntdef'
+}
 
 
 return Opcodes
