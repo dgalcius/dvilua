@@ -43,8 +43,14 @@ end
 function Dvi.dump(fh, contents)
    --   print(inspect(contents[1]._opcode))
    --print(inspect(contents[1]._opcode.write))
-   opcode_name, opcode_body  = contents[1]._opcode, contents[1]
-   opcodes[opcode_name].write(fh, opcode_body)
+   local contents = contents
+   for _, i in pairs(contents) do
+      opcode_name, opcode_body  = i._opcode, i
+      print(inspect(opcode_body))
+      opcodes[opcode_name].write(fh, opcode_body)
+   end
+--   opcode_name, opcode_body  = contents[1]._opcode, contents[1]
+--   opcodes[opcode_name].write(fh, opcode_body)
    return true
 end
 

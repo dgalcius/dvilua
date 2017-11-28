@@ -26,6 +26,7 @@ function pre.read(f)
    comment = f:read(byte(readbyte(f)))
    return { _opcode = "pre", version = version, num = num, den = den, mag = mag, comment = comment }
 end
+
 function pre.write(f, body)
    local opcode = 247
    write_uint1(f, opcode)
@@ -37,7 +38,6 @@ function pre.write(f, body)
    f:write(body.comment)
    return 1 + 1 + 4 + 4 + 4 + 1 + length(body.comment)
 end
-
 
 local post = {
    range = 248,
@@ -98,6 +98,16 @@ function bop.read(f)
    end
    previous = read_int4(f)
    return { _opcode = "bop", counters = counters, previous = previous }
+end
+
+function bop.write(f, body)
+   local opcode = 139
+   write_uint1(f, opcode)
+   for _, i in pairs(body.counters) do
+      write_uint4(f, i)
+   end
+   write_uint4(f, body.previous)
+   return 1 + 4*10 + 4
 end
 
 local eop = {
@@ -228,6 +238,16 @@ function down.read(f, cmd)
    return { _opcode = "down", size = size }
 end
 
+function down.write(f, body)
+   local opcode = 156
+   local size = body.size
+   local base = opcodebase(size)
+   opcode = opcode + base
+   write_uint1(f, opcode)
+   write_uint[base](f, size)
+   return 1 + base
+end
+
 local y0 = {
    range = 161
 }
@@ -269,7 +289,9 @@ local fntnum = {
    range = {},
    index = nil
 }
-for i = 171, 234 do table.insert(fntnum.range, i) end
+for i = 171, 234 do
+   table.insert(fntnum.range, i)
+end
 
 function fntnum.read(f, cmd)
    index = cmd - 171

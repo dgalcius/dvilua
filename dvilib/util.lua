@@ -1,3 +1,5 @@
+local abs = math.abs
+
 function readbyte(fh)
    return fh:read(1)
 end
@@ -58,6 +60,21 @@ function write_uint1(fh, x)
    return 1
 end
 
+function write_uint2(fh, x)
+    local b2=string.char(x%256) x=(x-x%256)/256
+    local b1=string.char(x%256) x=(x-x%256)/256
+    fh:write(b1,b2)
+    return 2
+end
+
+function write_uint3(fh, x)
+    local b3=string.char(x%256) x=(x-x%256)/256
+    local b2=string.char(x%256) x=(x-x%256)/256
+    local b1=string.char(x%256) x=(x-x%256)/256
+    fh:write(b1,b2,b3)
+    return 3
+end
+
 function write_uint4(fh, x)
     local b4=string.char(x%256) x=(x-x%256)/256
     local b3=string.char(x%256) x=(x-x%256)/256
@@ -67,6 +84,15 @@ function write_uint4(fh, x)
     return 4
 end
 
+function opcodebase(size)
+   local size = abs(size)
+   local i = 0
+   if size < 2^7 then i = 1 end
+   if size < 2^15 then i = 2 end
+   if size < 2^23 then i = 3 end
+   if size < 2^31 then i = 4 end
+   return i
+end
 
 read_int  = { read_int1,  read_int2,  read_int3,  read_int4 }
 read_uint = { read_uint1, read_uint2, read_uint3, read_uint4 }
