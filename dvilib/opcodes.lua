@@ -1,13 +1,12 @@
 Opcodes = Opcodes or {}
 
+stack_level = 0
+stack_depth = 0
 local byte = string.byte
 local char = string.char
 local length = string.len
 
 
-function register_read(f,cmd,base)
-   return read_int[cmd - base](f)
-end
 
 local pre = {
    range = 247,
@@ -64,6 +63,21 @@ function post.read(f)
             l = l , u = u,  stack_depth = stack_depth, total_pages = total_pages }
 end
 
+function post.write(f, body)
+   local opcode = 248
+   final_post = body.final_bop
+   write_uint1(opcode)
+   write_uint4(body.final_bop)
+   write_uint4(body.num)
+   write_uint4(body.den)
+   write_uint4(body.mag)
+   write_uint4(body.l)
+   write_uint4(body.u)
+   write_uint2(body.stack_depth)
+   write_uint2(body.total_pages)
+   return 1 + 4*6 + 2 + 2 
+end
+
 local postpost = {
    range = 249,
    pointer = nil,
@@ -118,12 +132,24 @@ function eop.read()
    return { _opcode = "eop" }
 end
 
+function eop.write(f, body)
+   return register_write0(f, 140)
+end
+
 local push = {
    range = 141
 }
 
 function push.read(f)
    return { _opcode = "push" }
+end
+
+function push.write(f, body)
+   local opcode = 141
+   stack_level = stack_level + 1
+   stack_depth = 0
+   write_uint1(f, opcode)
+   return 1
 end
 
 local pop = {
@@ -134,6 +160,12 @@ function pop.read()
    return { _opcode = "pop" }
 end
 
+function pop.write(f, body)
+   local opcode = 142
+   stack_level = stack_level - 1
+   write_uint1(f, opcode)
+   return 1
+end
 
 local put = {
    range = {133, 134, 135, 136},
@@ -152,6 +184,13 @@ function putrule.read(f)
    return { _opcode = "putrule", height = height, width = width }
 end
 
+function putrule.write(f, body)
+   write_uint1(f, 137)
+   write_uint4(f, body.height)
+   write_uint4(f, body.width)
+   return 1 + 4 + 4
+end
+
 
 local set = {
    range = {128, 129, 130, 131},
@@ -167,6 +206,18 @@ local setrule = {
    range = {132}
 }
 
+function setrule.read(f, body)
+   print("* not defined **")
+   os.exit()
+end
+
+function setrule.write(f, body)
+   write_uint1(f, 132)
+   write_uint4(f, body.height)
+   write_uint4(f, body.width)
+   return 1 + 4 + 4
+end
+
 local setchar = {
    range = {},
    index = nil,
@@ -179,7 +230,11 @@ function setchar.read(f, cmd)
    return { _opcode = "setchar", index = index , zzz_char = zzz_char}
 end
 
-
+function setchar.write(f, body)
+   local opcode = body.index
+   write_uint1(f, opcode)
+   return 1
+end
 
 local right = {
    range = {143, 144, 145, 146},
@@ -191,12 +246,28 @@ function right.read(f)
    return { _opcode = "right", size = size }
 end
 
+function right.write(f, body)
+   local opcode = 142
+   local size = body.size
+   local base = opcodebase(size)
+   opcode = opcode + base
+   write_uint1(f, opcode)
+   write_uint[base](f, size)
+   return 1 + base
+end
+
 local w0 = {
    range = 147
 }
 
 function w0.read()
    return { _opcode = "w0" }
+end
+
+function w0.write(f, body)
+   local opcode = 147
+   write_uint1(f, opcode)
+   return 1
 end
 
 local w = {
@@ -209,6 +280,15 @@ function w.read(f, cmd)
    return { _opcode = "w", size = size }
 end
 
+function w.write(f, body)
+   local opcode = 147
+   base = opcode_mnr(body.size)
+   opcode = opcode + base
+   write_uint1(f, opcode)
+   write_uint[base](f, body.size)
+   return 1 + base
+end
+
 local x0 = {
    range = 152
 }
@@ -217,6 +297,9 @@ function x0.read()
    return { _opcode = "x0" }
 end
 
+function x0.write(f, body)
+   return register_write0(f, 152)
+end
 
 local x = {
    range = {153, 154, 155, 156},
@@ -226,6 +309,10 @@ local x = {
 function x.read(f, cmd)
    size = register_read(f,cmd,152)
    return { _opcode = "x", size = size }
+end
+
+function x.write(f, body)
+   return register_write(f, body, 152)
 end
 
 local down = {
@@ -239,13 +326,7 @@ function down.read(f, cmd)
 end
 
 function down.write(f, body)
-   local opcode = 156
-   local size = body.size
-   local base = opcodebase(size)
-   opcode = opcode + base
-   write_uint1(f, opcode)
-   write_uint[base](f, size)
-   return 1 + base
+   return register_write(f, body, 156)
 end
 
 local y0 = {
@@ -254,6 +335,10 @@ local y0 = {
 
 function y0.read()
    return { _opcode = "y0" }
+end
+
+function y0.write(f, body)
+   return register_write0(f, 161)
 end
 
 local y = {
@@ -266,6 +351,10 @@ function y.read(f, cmd)
    return { _opcode = "y", size = size }
 end
 
+function y.write(f, body)
+   return register_write(f, body, 161)
+end
+
 
 local z0 = {
    range = 166
@@ -275,14 +364,22 @@ function z0.read()
    return { _opcode = "z0" }
 end
 
+function z0.write(f, body)
+   return register_write0(f, 166)
+end
+
 local z = {
    range = {167, 168, 169, 170},
    size = nil
 }
 
 function z.read(f, cmd)
-   size = register_read(f,cmd,166)
+   size = register_read(f, cmd, 166)
    return { _opcode = "z", size = size }
+end
+
+function z.write(f, body)
+   return register_write(f, body, 166)
 end
 
 local fntnum = {
@@ -297,6 +394,13 @@ function fntnum.read(f, cmd)
    index = cmd - 171
    return { _opcode = "fntnum", index = index }
 end
+
+function fntnum.write(f, body)
+   local opcode = 171 + body.index
+   write_uint1(f, opcode)
+   return 1
+end
+
 
 local fnt = {
    range = {235, 236, 237, 238},
@@ -323,7 +427,7 @@ function fntdef.read(f, cmd)
    n = cmd - 242
    num = 0
    if n < 4 then
-     num = read_uint[n](f)
+      num = read_uint[n](f)
    else
       num = read_int4(f)
    end
@@ -336,6 +440,23 @@ function fntdef.read(f, cmd)
    fontname = f:read(l)
    return { _opcode = "fntdef", num = num, checksum = checksum, scale = scale,
             design_size = design_size, area = area, fontname = fontname }
+end
+
+function fntdef.write(f, body)
+   local opcode = 242
+   base = opcode_fdnr(body.num)
+   print(base)
+   opcode = opcode + base
+   write_uint1(f, opcode)
+   write_uint[base](f, body.num)
+   write_uint4(f, body.checksum)
+   write_uint4(f, body.scale)
+   write_uint4(f, body.design_size)
+   write_uint1(f, length(body.area))
+   write(f, body.area)
+   write_uint1(f, length(body.fontname))
+   write(f, body.fontname)
+   return 1 + base + 4 + 4 + 4 + 1 + 1 + length(body.area) + length(body.fontname) 
 end
 
 Opcodes.pre      = pre

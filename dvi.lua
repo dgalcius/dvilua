@@ -5,14 +5,9 @@ local byte = string.byte
 require("dvilib/util")
 opcodes = require("dvilib/opcodes")
 
---
---os.exit()
-
-
 function Dvi.parse(fh)
 --   print (inspect(opcodes))
    local c, t = {}, {}
-
    for _, opcode in pairs(opcodes.basic_opcodes) do
       s = opcodes[opcode].range
       if type(s) == "table" then

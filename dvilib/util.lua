@@ -84,6 +84,10 @@ function write_uint4(fh, x)
     return 4
 end
 
+function write(fh, x)
+   fh:write(x)
+end
+
 function opcodebase(size)
    local size = abs(size)
    local i = 0
@@ -93,6 +97,44 @@ function opcodebase(size)
    if size < 2^31 then i = 4 end
    return i
 end
+
+function opcode_mnr(size)
+   local size = abs(size)
+   local i = 0
+   if size < 2^7 then i = 1 end
+   if size < 2^15 then i = 2 end
+   if size < 2^23 then i = 3 end
+   if size < 2^31 then i = 4 end
+   return i
+end
+
+function opcode_fdnr(size)
+   local size = abs(size)
+   local i = 0
+   if size < 2^8 then i = 1 end
+   if size < 2^16 then i = 2 end
+   if size < 2^24 then i = 3 end
+   if size > 2^24 then i = 4 end
+   return i
+end
+
+function register_read(f, cmd, base)
+   return read_int[cmd - base](f)
+end
+
+function register_write0(f, opcode)
+   write_uint1(f, opcode)
+   return 1
+end
+
+function register_write(f, body, opcode)
+   local base = opcode_mnr(body.size)
+   opcode = opcode + base
+   write_uint1(f, opcode)
+   write_uint[base](f, body.size)
+   return 1 + base
+end
+
 
 read_int  = { read_int1,  read_int2,  read_int3,  read_int4 }
 read_uint = { read_uint1, read_uint2, read_uint3, read_uint4 }
