@@ -7,8 +7,12 @@ local dvi = require("dvi")
 local dvifile = arg[1]
 local fh = assert(io.open(dvifile, 'rb'))
 
+
+
 print(assert(type(dvi.parse) == "function"))
 print(assert(type(dvi.opcodes) == "table"))
+
+print(1 + nil)
 
 -- local dv = dvi.parse(fh)
 -- local dv = dvi.unpack(fh)
