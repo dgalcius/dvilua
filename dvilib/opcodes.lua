@@ -1,11 +1,9 @@
 Opcodes = Opcodes or {}
 
-stack_level = 0
-stack_depth = 0
 local byte = string.byte
 local char = string.char
 local length = string.len
-
+local max = math.max
 
 
 local pre = {
@@ -28,6 +26,7 @@ end
 
 function pre.write(f, body)
    local opcode = 247
+   dvi_version = body.version
    write_uint1(f, opcode)
    write_uint1(f, body.version)
    write_uint4(f, body.num)
@@ -66,15 +65,15 @@ end
 function post.write(f, body)
    local opcode = 248
    final_post = body.final_bop
-   write_uint1(opcode)
-   write_uint4(body.final_bop)
-   write_uint4(body.num)
-   write_uint4(body.den)
-   write_uint4(body.mag)
-   write_uint4(body.l)
-   write_uint4(body.u)
-   write_uint2(body.stack_depth)
-   write_uint2(body.total_pages)
+   write_uint1(f, opcode)
+   write_uint4(f, body.final_bop)
+   write_uint4(f, body.num)
+   write_uint4(f, body.den)
+   write_uint4(f, body.mag)
+   write_uint4(f, body.l)
+   write_uint4(f, body.u)
+   write_uint2(f, stack_depth)
+   write_uint2(f, total_pages)
    return 1 + 4*6 + 2 + 2 
 end
 
@@ -96,22 +95,42 @@ function postpost.read(f)
       assert(byte(i) == 223)
       table.insert(trailing, byte(i))
    end
-   return { _opcode = "postpost", pointer = pointer , version = version, trailing = trailing}
+   return { _opcode = "postpost", pointer = pointer,
+            version = version, trailing = trailing
+   }
 end
+
+function postpost.write(f, body)
+   local opcode = 249
+   local trailing = 223
+   final_post = body.pointer
+   write_uint1(f, opcode)
+   write_uint4(f, final_post)
+   write_uint1(f, dvi_version)
+   write_uint1(f, trailing)
+   write_uint1(f, trailing)
+   write_uint1(f, trailing)
+   write_uint1(f, trailing)
+   write_uint1(f, trailing)
+   -- *****************
+   
+   return 0
+end
+
 
 local bop = {
    range = 139,
-   c = {},
-   p = nil,
+   counters = {},
+   previous_bop = nil,
 }
 
 function bop.read(f)
-   counters = {}
+   local counters = {}
    for i = 1, 10 do
       table.insert(counters, read_uint4(f))
    end
-   previous = read_int4(f)
-   return { _opcode = "bop", counters = counters, previous = previous }
+   previous_bop = read_int4(f)
+   return { _opcode = "bop", counters = counters, previous_bop = previous_bop }
 end
 
 function bop.write(f, body)
@@ -120,7 +139,9 @@ function bop.write(f, body)
    for _, i in pairs(body.counters) do
       write_uint4(f, i)
    end
-   write_uint4(f, body.previous)
+   write_uint4(f, prev_bop)
+   prev_bop = cur_pos
+   total_pages = total_pages + 1
    return 1 + 4*10 + 4
 end
 
@@ -133,6 +154,7 @@ function eop.read()
 end
 
 function eop.write(f, body)
+   assert(stack_level==0) -- push/pop stack per page 
    return register_write0(f, 140)
 end
 
@@ -147,7 +169,7 @@ end
 function push.write(f, body)
    local opcode = 141
    stack_level = stack_level + 1
-   stack_depth = 0
+   stack_depth = max(stack_level,stack_depth)
    write_uint1(f, opcode)
    return 1
 end
@@ -247,6 +269,8 @@ function right.read(f)
 end
 
 function right.write(f, body)
+   print(inspect(body))
+   os.exit()
    local opcode = 142
    local size = body.size
    local base = opcodebase(size)

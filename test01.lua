@@ -20,8 +20,8 @@ print('\n=END=')
 
 local dvifileout = 'out.dvi'
 local fout = assert(io.open(dvifileout, 'wb'))
-s = dvi.dump(fout, contents)
-print(s)
+dvi.dump(fout, contents)
+
 
 os.exit()
 print(assert(type(dvi.parse) == "function"))
