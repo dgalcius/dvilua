@@ -111,9 +111,10 @@ function postpost.write(f, body)
    write_uint1(f, trailing)
    write_uint1(f, trailing)
    write_uint1(f, trailing)
-   write_uint1(f, trailing)
-   -- *****************
-   
+   i = trailing_count(cur_pos + 10)
+   for j = 1, i do
+      write_uint1(f, trailing)
+   end
    return 0
 end
 
@@ -263,14 +264,12 @@ local right = {
    size = nil,
 }
 
-function right.read(f)
-   size = register_read(f,cmd,142)
+function right.read(f, cmd)
+   size = register_read(f, cmd, 142)
    return { _opcode = "right", size = size }
 end
 
 function right.write(f, body)
-   print(inspect(body))
-   os.exit()
    local opcode = 142
    local size = body.size
    local base = opcodebase(size)
@@ -331,12 +330,12 @@ local x = {
 }
 
 function x.read(f, cmd)
-   size = register_read(f,cmd,152)
+   size = register_read(f, cmd, 152)
    return { _opcode = "x", size = size }
 end
 
 function x.write(f, body)
-   return register_write(f, body, 152)
+   return register_write(f, body, 152) 
 end
 
 local down = {
@@ -345,7 +344,7 @@ local down = {
 }
 
 function down.read(f, cmd)
-   size = register_read(f,cmd,156)
+   size = register_read(f, cmd, 156)
    return { _opcode = "down", size = size }
 end
 
@@ -469,7 +468,6 @@ end
 function fntdef.write(f, body)
    local opcode = 242
    base = opcode_fdnr(body.num)
-   print(base)
    opcode = opcode + base
    write_uint1(f, opcode)
    write_uint[base](f, body.num)

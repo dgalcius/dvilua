@@ -34,7 +34,7 @@ end
 function read_int2(fh)
    local n = read_uint2(fh)
    if n >= 32768 then
-     n = n - 65535
+     n = n - 65536
    end
    return n
 end
@@ -108,13 +108,13 @@ function opcodebase(size)
    return i
 end
 
-function opcode_mnrZZZ(size)
+function opcode_mnr(size)
    local size = abs(size)
    local i = 0
-   if size < 2^7 then i = 1 end
-   if size < 2^15 then i = 2 end
-   if size < 2^23 then i = 3 end
    if size < 2^31 then i = 4 end
+   if size < 2^23 then i = 3 end
+   if size < 2^15 then i = 2 end
+   if size < 2^7 then i = 1 end
    return i
 end
 
@@ -126,9 +126,6 @@ function opcode_fdnr(size)
    if size < 2^8 then i = 1 end
    return i
 end
-
-opcode_mnr = opcode_fdnr 
-
 
 function register_read(f, cmd, base)
    return read_int[cmd - base](f)
@@ -145,6 +142,11 @@ function register_write(f, body, opcode)
    write_uint1(f, opcode)
    write_uint[base](f, body.size)
    return 1 + base
+end
+
+function trailing_count(number)
+   i = (4 - (number) % 4) % 4
+   return i 
 end
 
 read_int  = { read_int1,  read_int2,  read_int3,  read_int4 }
