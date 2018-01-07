@@ -219,19 +219,38 @@ local set = {
    range = {128, 129, 130, 131},
    index = nil
 }
--- for i = 0, 127 do table.insert(set.range, i) end
-local set = {
-   range = {128, 129, 130, 131},
-   index = nil
-}
+
+function set.read(f, cmd)
+   local base = 127
+   local index = 0
+   n = cmd - base
+   if n < 4 then
+      index = read_uint[n](f)
+   else
+      index = read_int4(f)
+   end
+   return { _opcode = "set", index = index }
+end
+
+function set.write(f, body)
+   local opcode = 127
+   base = opcode_fnr(body.index)
+   opcode = opcode + base
+   write_uint1(f, opcode)
+   write_uint[base](f, body.index)
+   return 1 + base 
+end
 
 local setrule = {
-   range = {132}
+   range = 132,
+   height = nil,
+   weight = nil
 }
 
-function setrule.read(f, body)
-   print("* not defined **")
-   os.exit()
+function setrule.read(f)
+   local height = read_int4(f)
+   local width  = read_int4(f)
+   return { _opcode = "setrule", height = height, width = width }
 end
 
 function setrule.write(f, body)
