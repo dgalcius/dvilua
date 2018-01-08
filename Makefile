@@ -12,3 +12,6 @@ default: 01.dt
 
 02:
 	./test02.lua 01.dvi
+
+3:
+	./luadvi.lua sample2e.dvi
