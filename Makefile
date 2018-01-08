@@ -15,3 +15,6 @@ default: 01.dt
 
 3:
 	./luadvi.lua sample2e.dvi
+
+4:
+	./luadvi.lua dfc.dvi
