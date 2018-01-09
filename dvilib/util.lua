@@ -127,6 +127,17 @@ function opcode_fnr(size)
    return i
 end
 
+function opcode_snr(size)
+   local size = abs(size)
+   local ksize = 254
+   if size < 254 then
+      i = 1
+   else
+      i = 4
+   end
+   return i
+end
+
 function register_read(f, cmd, base)
    return read_int[cmd - base](f)
 end

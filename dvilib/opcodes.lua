@@ -208,12 +208,26 @@ function putrule.read(f)
 end
 
 function putrule.write(f, body)
-   write_uint1(f, 137)
+   local opcode = 137
+   write_uint1(f, opcode)
    write_uint4(f, body.height)
    write_uint4(f, body.width)
    return 1 + 4 + 4
 end
 
+local nop = {
+   range = 138
+}
+
+function nop.read(f, cmd)
+   return { _opcode = "nop" }
+end
+
+function nop.write(f, body)
+   local opcode = 138
+   write_uint1(f, opcode)
+   return 1
+end
 
 local set = {
    range = {128, 129, 130, 131},
@@ -443,17 +457,52 @@ function fntnum.write(f, body)
    return 1
 end
 
-
 local fnt = {
    range = {235, 236, 237, 238},
    index = nil
 }
+
+function fnt.read(f, cmd)
+   base = cmd - 234
+   if n < 4 then
+      index = read_uint[n](f)
+   else
+      index = read_int[n](f)
+   end
+   return { _opcode = "fnt", index = index }
+end
+
+function fnt.write(f, body)
+   local opcode = 234
+   base = opcode_fdnr(body.index)
+   opcode = opcode + base
+   write_uint1(f, opcode)
+   write_uint[base](f, body.index)
+   return 1 + base
+end
 
 local xxx = {
    range = {239, 240, 241, 242},
    contents = nil,
    size = nil,
 }
+function xxx.read(f, cmd)
+   local n = cmd - 238
+   size = read_uint[n](f)
+   content = f:read(size)
+   return { _opcode = "xxx", size = size, content = content }
+end
+
+function xxx.write(f, body)
+   local opcode = 238
+   base = opcode_snr(body.size)
+   opcode = opcode + base
+   write_uint1(f, opcode)
+   write_uint[base](f, body.size)
+   f:write(body.content)
+   return 1 + base + length(body.content)
+end
+
 
 local fntdef = {
    range = {243, 244, 245, 246},
@@ -509,6 +558,7 @@ Opcodes.push     = push
 Opcodes.pop      = pop
 Opcodes.put      = put
 Opcodes.putrule  = putrule
+Opcodes.nop      = nop
 Opcodes.set      = set
 Opcodes.setrule  = setrule
 Opcodes.setchar  = setchar
@@ -531,6 +581,7 @@ Opcodes.basic_opcodes = {
    'bop', 'eop',
    'push', 'pop',
    'put', 'putrule',
+   'nop',
    'set', 'setrule',
    'setchar', 'xxx',
    'right', 'w0', 'w', 'x0', 'x',
