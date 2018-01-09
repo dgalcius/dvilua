@@ -29,7 +29,8 @@ function Dvi.parse(fh)
   while _x  do
      cmd = byte(_x)
      opcode = t[cmd]
-     print(inspect(opcode))
+--     print(inspect(cmd))
+--     print(inspect(opcode))
      table.insert(c, opcodes[opcode].read(fh,cmd))
      _x = readbyte(fh)
   end
@@ -49,7 +50,7 @@ function Dvi.dump(fh, contents)
    local contents = contents
    for _, i in pairs(contents) do
       opcode_name, opcode_body  = i._opcode, i
-       print(inspect(opcode_body))
+--       print(inspect(opcode_body))
       j = opcodes[opcode_name].write(fh, opcode_body)
       cur_pos = cur_pos + j
    end
