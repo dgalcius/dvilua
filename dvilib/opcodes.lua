@@ -16,17 +16,17 @@ local pre = {
 }
 
 function pre.read(f)
-   version = read_uint1(f)
-   num = read_uint4(f)
-   den = read_uint4(f)
-   mag = read_uint4(f)
-   comment = f:read(byte(readbyte(f)))
+   local version = read_uint1(f)
+   local num = read_uint4(f)
+   local den = read_uint4(f)
+   local mag = read_uint4(f)
+   local comment = f:read(byte(readbyte(f)))
    return { _opcode = "pre", version = version, num = num, den = den, mag = mag, comment = comment }
 end
 
 function pre.write(f, body)
    local opcode = 247
-   dvi_version = body.version
+   local dvi_version = body.version
    write_uint1(f, opcode)
    write_uint1(f, body.version)
    write_uint4(f, body.num)
@@ -50,21 +50,21 @@ local post = {
 }
 
 function post.read(f)
-   final_bop = read_uint4(f)
-   num = read_uint4(f)
-   den = read_uint4(f)
-   mag = read_uint4(f)
-   l = read_uint4(f)
-   u = read_uint4(f)
-   stack_size = read_uint2(f)
-   total_pages = read_uint2(f)
+   local final_bop = read_uint4(f)
+   local num = read_uint4(f)
+   local den = read_uint4(f)
+   local mag = read_uint4(f)
+   local l = read_uint4(f)
+   local u = read_uint4(f)
+   local stack_size = read_uint2(f)
+   local total_pages = read_uint2(f)
    return { _opcode = "post", final_bop = final_bop, num = num, den = den, mag = mag,
             l = l , u = u,  stack_depth = stack_depth, total_pages = total_pages }
 end
 
 function post.write(f, body)
    local opcode = 248
-   final_post = body.final_bop
+   local final_post = body.final_bop
    write_uint1(f, opcode)
    write_uint4(f, body.final_bop)
    write_uint4(f, body.num)
@@ -84,11 +84,11 @@ local postpost = {
 }
 
 function postpost.read(f)
-   pointer = read_uint4(f)
-   version = read_uint1(f)
+   local pointer = read_uint4(f)
+   local version = read_uint1(f)
    local trailing = {}
    while true do
-      i = readbyte(f)
+      local i = readbyte(f)
       if i == nil then
          break
       end
@@ -103,7 +103,7 @@ end
 function postpost.write(f, body)
    local opcode = 249
    local trailing = 223
-   final_post = body.pointer
+   local final_post = body.pointer
    write_uint1(f, opcode)
    write_uint4(f, final_post)
    write_uint1(f, dvi_version)
@@ -111,7 +111,7 @@ function postpost.write(f, body)
    write_uint1(f, trailing)
    write_uint1(f, trailing)
    write_uint1(f, trailing)
-   i = trailing_count(cur_pos + 10)
+   local i = trailing_count(cur_pos + 10)
    for j = 1, i do
       write_uint1(f, trailing)
    end
@@ -130,7 +130,7 @@ function bop.read(f)
    for i = 1, 10 do
       table.insert(counters, read_uint4(f))
    end
-   previous_bop = read_int4(f)
+   local previous_bop = read_int4(f)
    return { _opcode = "bop", counters = counters, previous_bop = previous_bop }
 end
 
@@ -141,8 +141,8 @@ function bop.write(f, body)
       write_uint4(f, i)
    end
    write_uint4(f, prev_bop)
-   prev_bop = cur_pos
-   total_pages = total_pages + 1
+   prev_bop = cur_pos             -- global
+   total_pages = total_pages + 1  -- global
    return 1 + 4*10 + 4
 end
 
