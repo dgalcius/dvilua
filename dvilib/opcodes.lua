@@ -5,6 +5,13 @@ local char = string.char
 local length = string.len
 local max = math.max
 
+util = require("dvilib/util")
+
+--[[
+<opcode> = {<params>}       -- table with params of <Opcode>
+<opcode>.read(file_handle)  -- function to read <Opcode> params into table
+<opcode>.write(file_handle, <params>) - function to write Opcode+params to DVI
+--]]
 
 local pre = {
    range = 247,
