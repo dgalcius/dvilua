@@ -1,5 +1,6 @@
 #!/usr/bin/env lua
 
+--local _ENV = require 'std.strict' (_G)
 local inspect = require("inspect")
 local dvi = require("dvi")
 

@@ -1,3 +1,4 @@
+local _M = _M or {}
 
 local abs = math.abs
 local byte, char = string.byte, string.char
@@ -166,5 +167,34 @@ read_int   = { read_int1,   read_int2,   read_int3,   read_int4   }
 read_uint  = { read_uint1,  read_uint2,  read_uint3,  read_uint4  }
 write_uint = { write_uint1, write_uint2, write_uint3, write_uint4 }
 write_int  = { write_int1,  write_int2,  write_int3,  write_int4  }
+
+--[[
+_M.read_int = read_int
+_M.read_uint = read_uint
+_M.write_int = write_int
+_M.write_uint = write_uint
+_M.read_int1 = read_int1
+_M.read_int2 = read_int2
+_M.read_int3 = read_int3
+_M.read_int4 = read_int4
+_M.read_uint1 = read_uint1
+_M.read_uint2 = read_uint2
+_M.read_uint3 = read_uint3
+_M.read_uint4 = read_uint4
+_M.write_uint1 = write_uint1
+_M.write_uint2 = write_uint2
+_M.write_uint3 = write_uint3
+_M.write_uint4 = write_uint4
+_M.readbyte = readbyte
+_M.opcodebase  = opcodebase
+_M.opcode_mnr  = opcode_mnr
+_M.opcode_fnr  = opcode_fnr
+_M.opcode_fdnr = opcode_fdnr
+_M.opcode_snr  = opcode_snr
+_M.register_read  = register_read
+_M.register_read0 = register_read0
+_M.register_write = register_write
+_M.trailing_count = trailing_count
+--]]
 
 return true

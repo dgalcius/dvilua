@@ -1,12 +1,42 @@
-Opcodes = Opcodes or {}
+local Opcodes = Opcodes or {}
 
 local byte = string.byte
 local char = string.char
 local length = string.len
 local max = math.max
 
-util = require("dvilib/util")
-
+require("dvilib/util")
+local inspect = require("inspect")
+--[[
+local util = require("dvilib/util")
+local read_int = util.read_int
+local read_uint = util.read_uint
+local write_int = util.write_int
+local write_uint = util.write_uint
+local read_int1 = util.read_int1
+local read_int2 = util.read_int2
+local read_int3 = util.read_int3
+local read_int4 = util.read_int4
+local read_uint1 = util.read_uint1
+local read_uint2 = util.read_uint2
+local read_uint3 = util.read_uint3
+local read_uint4 = util.read_uint4
+local write_uint1 = util.write_uint1
+local write_uint2 = util.write_uint2
+local write_uint3 = util.write_uint3
+local write_uint4 = util.write_uint4
+local readbyte = util.readbyte
+local opcodebase  = util.opcodebase
+local opcode_mnr  = util.opcode_mnr
+local opcode_fnr  = util.opcode_fnr
+local opcode_fdnr = util.opcode_fdnr
+local opcode_snr  = util.opcode_snr
+local register_read  = util.register_read
+local register_read0 = util.register_read0
+local register_write = util.register_write
+local trailing_count = util.trailing_count
+--]]
+   
 --[[
 <opcode> = {<params>}       -- table with params of <Opcode>
 <opcode>.read(file_handle)  -- function to read <Opcode> params into table
@@ -31,7 +61,7 @@ function pre.read(f)
    return { _opcode = "pre", version = version, num = num, den = den, mag = mag, comment = comment }
 end
 
-function pre.write(f, body)
+function pre.write(f, body, accum)
    local opcode = 247
    local dvi_version = body.version
    write_uint1(f, opcode)
@@ -41,6 +71,7 @@ function pre.write(f, body)
    write_uint4(f, body.mag)
    write_uint1(f, length(body.comment))
    f:write(body.comment)
+   
    return 1 + 1 + 4 + 4 + 4 + 1 + length(body.comment)
 end
 
@@ -141,16 +172,20 @@ function bop.read(f)
    return { _opcode = "bop", counters = counters, previous_bop = previous_bop }
 end
 
-function bop.write(f, body)
+function bop.write(f, body, accum)
+   print(inspect(accum))
+   local accum = accum
    local opcode = 139
    write_uint1(f, opcode)
    for _, i in pairs(body.counters) do
       write_uint4(f, i)
    end
-   write_uint4(f, prev_bop)
-   prev_bop = cur_pos             -- global
-   total_pages = total_pages + 1  -- global
-   return 1 + 4*10 + 4
+   print(accum["prev_bop"])
+   write_uint4(f, accum.prev_bop)
+   accum.prev_bop = accum.cur_pos             -- global -> local
+   accum.total_pages = accum.total_pages + 1  -- global -> local
+   accum.cur_pos = accum.cur_pos + (1 + 4*10 + 4)
+   return accum
 end
 
 local eop = {
