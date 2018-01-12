@@ -1,7 +1,5 @@
 Dvi = Dvi or {}
 
-
-
 local byte = string.byte
 
 opcodes = require("dvilib/opcodes")
