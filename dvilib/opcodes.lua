@@ -1,14 +1,13 @@
 local Opcodes = Opcodes or {}
 
-local byte = string.byte
-local char = string.char
+local byte   = string.byte
+local char   = string.char
 local length = string.len
-local max = math.max
+local max    = math.max
 
-require("dvilib/util")
 local inspect = require("inspect")
---[[
-local util = require("dvilib/util")
+local util    = require("dvilib/util")
+
 local read_int = util.read_int
 local read_uint = util.read_uint
 local write_int = util.write_int
@@ -35,8 +34,7 @@ local register_read  = util.register_read
 local register_read0 = util.register_read0
 local register_write = util.register_write
 local trailing_count = util.trailing_count
---]]
-   
+
 --[[
 <opcode> = {<params>}       -- table with params of <Opcode>
 <opcode>.read(file_handle)  -- function to read <Opcode> params into table
@@ -71,8 +69,8 @@ function pre.write(f, body, accum)
    write_uint4(f, body.mag)
    write_uint1(f, length(body.comment))
    f:write(body.comment)
-   
-   return 1 + 1 + 4 + 4 + 4 + 1 + length(body.comment)
+   accum.cur_pos = accum.cur_pos + (1 + 1 + 4 + 4 + 4 + 1 + length(body.comment))
+   return accum
 end
 
 local post = {
@@ -100,7 +98,7 @@ function post.read(f)
             l = l , u = u,  stack_depth = stack_depth, total_pages = total_pages }
 end
 
-function post.write(f, body)
+function post.write(f, body, accum)
    local opcode = 248
    local final_post = body.final_bop
    write_uint1(f, opcode)
@@ -110,9 +108,10 @@ function post.write(f, body)
    write_uint4(f, body.mag)
    write_uint4(f, body.l)
    write_uint4(f, body.u)
-   write_uint2(f, stack_depth)
-   write_uint2(f, total_pages)
-   return 1 + 4*6 + 2 + 2 
+   write_uint2(f, accum.stack_depth)
+   write_uint2(f, accum.total_pages)
+   accum.cur_pos = accum.cur_pos + (1 + 4*6 + 2 + 2)
+   return accum
 end
 
 local postpost = {
@@ -138,22 +137,22 @@ function postpost.read(f)
    }
 end
 
-function postpost.write(f, body)
+function postpost.write(f, body, accum)
    local opcode = 249
    local trailing = 223
    local final_post = body.pointer
    write_uint1(f, opcode)
-   write_uint4(f, final_post)
-   write_uint1(f, dvi_version)
+   write_uint4(f, accum.final_post)
+   write_uint1(f, accum.dvi_version)
    write_uint1(f, trailing)
    write_uint1(f, trailing)
    write_uint1(f, trailing)
    write_uint1(f, trailing)
-   local i = trailing_count(cur_pos + 10)
+   local i = trailing_count(accum.cur_pos + 10)
    for j = 1, i do
       write_uint1(f, trailing)
    end
-   return 0
+   return {}
 end
 
 
@@ -173,14 +172,12 @@ function bop.read(f)
 end
 
 function bop.write(f, body, accum)
-   print(inspect(accum))
    local accum = accum
    local opcode = 139
    write_uint1(f, opcode)
    for _, i in pairs(body.counters) do
       write_uint4(f, i)
    end
-   print(accum["prev_bop"])
    write_uint4(f, accum.prev_bop)
    accum.prev_bop = accum.cur_pos             -- global -> local
    accum.total_pages = accum.total_pages + 1  -- global -> local
@@ -196,9 +193,11 @@ function eop.read()
    return { _opcode = "eop" }
 end
 
-function eop.write(f, body)
-   assert(stack_level==0) -- push/pop stack per page 
-   return register_write0(f, 140)
+function eop.write(f, body, accum)
+   assert(accum.stack_level==0) -- push/pop stack per page
+   local i = register_write0(f, 140)
+   accum.cur_pos = accum.cur_pos + i
+   return accum
 end
 
 local push = {
@@ -209,12 +208,13 @@ function push.read(f)
    return { _opcode = "push" }
 end
 
-function push.write(f, body)
+function push.write(f, body, accum)
    local opcode = 141
-   stack_level = stack_level + 1
-   stack_depth = max(stack_level,stack_depth)
+   accum.stack_level = accum.stack_level + 1
+   accum.stack_depth = max(accum.stack_level,accum.stack_depth)
    write_uint1(f, opcode)
-   return 1
+   accum.cur_pos = accum.cur_pos + 1
+   return accum
 end
 
 local pop = {
@@ -225,11 +225,12 @@ function pop.read()
    return { _opcode = "pop" }
 end
 
-function pop.write(f, body)
+function pop.write(f, body, accum)
    local opcode = 142
-   stack_level = stack_level - 1
+   accum.stack_level = accum.stack_level - 1
    write_uint1(f, opcode)
-   return 1
+   accum.cur_pos = accum.cur_pos + 1
+   return accum
 end
 
 local put = {
@@ -249,12 +250,13 @@ function putrule.read(f)
    return { _opcode = "putrule", height = height, width = width }
 end
 
-function putrule.write(f, body)
+function putrule.write(f, body, accum)
    local opcode = 137
    write_uint1(f, opcode)
    write_uint4(f, body.height)
    write_uint4(f, body.width)
-   return 1 + 4 + 4
+   accum.cur_pos = accum.cur_pos + (1 + 4 + 4)
+   return accum
 end
 
 local nop = {
@@ -265,10 +267,11 @@ function nop.read(f, cmd)
    return { _opcode = "nop" }
 end
 
-function nop.write(f, body)
+function nop.write(f, body, accum)
    local opcode = 138
    write_uint1(f, opcode)
-   return 1
+   accum.cur_pos = accum.cur_pos + 1
+   return accum
 end
 
 local set = {
@@ -288,13 +291,14 @@ function set.read(f, cmd)
    return { _opcode = "set", index = index }
 end
 
-function set.write(f, body)
+function set.write(f, body, accum)
    local opcode = 127
-   base = opcode_fnr(body.index)
+   local base = opcode_fnr(body.index)
    opcode = opcode + base
    write_uint1(f, opcode)
    write_uint[base](f, body.index)
-   return 1 + base 
+   accum.cur_pos = accum.cur_pos + (1 + base)
+   return accum
 end
 
 local setrule = {
@@ -309,11 +313,12 @@ function setrule.read(f)
    return { _opcode = "setrule", height = height, width = width }
 end
 
-function setrule.write(f, body)
+function setrule.write(f, body, accum)
    write_uint1(f, 132)
    write_uint4(f, body.height)
    write_uint4(f, body.width)
-   return 1 + 4 + 4
+   accum.cur_pos = accum.cur_pos + (1 + 4 + 4)
+   return accum
 end
 
 local setchar = {
@@ -328,10 +333,11 @@ function setchar.read(f, cmd)
    return { _opcode = "setchar", index = index , zzz_char = zzz_char}
 end
 
-function setchar.write(f, body)
+function setchar.write(f, body, accum)
    local opcode = body.index
    write_uint1(f, opcode)
-   return 1
+   accum.cur_pos = accum.cur_pos + 1
+   return accum
 end
 
 local right = {
@@ -344,14 +350,15 @@ function right.read(f, cmd)
    return { _opcode = "right", size = size }
 end
 
-function right.write(f, body)
+function right.write(f, body, accum)
    local opcode = 142
    local size = body.size
    local base = opcodebase(size)
    opcode = opcode + base
    write_uint1(f, opcode)
    write_uint[base](f, size)
-   return 1 + base
+   accum.cur_pos = accum.cur_pos + (1 + base)
+   return accum
 end
 
 local w0 = {
@@ -362,10 +369,11 @@ function w0.read()
    return { _opcode = "w0" }
 end
 
-function w0.write(f, body)
+function w0.write(f, body, accum)
    local opcode = 147
    write_uint1(f, opcode)
-   return 1
+   accum.cur_pos = accum.cur_pos + 1 
+   return accum
 end
 
 local w = {
@@ -378,13 +386,14 @@ function w.read(f, cmd)
    return { _opcode = "w", size = size }
 end
 
-function w.write(f, body)
+function w.write(f, body, accum)
    local opcode = 147
-   base = opcode_mnr(body.size)
+   local base = opcode_mnr(body.size)
    opcode = opcode + base
    write_uint1(f, opcode)
    write_uint[base](f, body.size)
-   return 1 + base
+   accum.cur_pos = accum.cur_pos + (1 + base)
+   return accum
 end
 
 local x0 = {
@@ -395,8 +404,10 @@ function x0.read()
    return { _opcode = "x0" }
 end
 
-function x0.write(f, body)
-   return register_write0(f, 152)
+function x0.write(f, body, accum)
+   local i = register_write0(f, 152)
+   accum.cur_pos = accum.cur_pos + i
+   return accum
 end
 
 local x = {
@@ -409,8 +420,10 @@ function x.read(f, cmd)
    return { _opcode = "x", size = size }
 end
 
-function x.write(f, body)
-   return register_write(f, body, 152) 
+function x.write(f, body, accum)
+   local i = register_write(f, body, 152)
+   accum.cur_pos = accum.cur_pos + i
+   return accum
 end
 
 local down = {
@@ -423,8 +436,10 @@ function down.read(f, cmd)
    return { _opcode = "down", size = size }
 end
 
-function down.write(f, body)
-   return register_write(f, body, 156)
+function down.write(f, body, accum)
+   local i = register_write(f, body, 156)
+   accum.cur_pos = accum.cur_pos + i
+   return accum
 end
 
 local y0 = {
@@ -435,8 +450,10 @@ function y0.read()
    return { _opcode = "y0" }
 end
 
-function y0.write(f, body)
-   return register_write0(f, 161)
+function y0.write(f, body, accum)
+   local i = register_write0(f, 161)
+   accum.cur_pos = accum.cur_pos + i
+   return accum
 end
 
 local y = {
@@ -449,8 +466,10 @@ function y.read(f, cmd)
    return { _opcode = "y", size = size }
 end
 
-function y.write(f, body)
-   return register_write(f, body, 161)
+function y.write(f, body, accum)
+   local i =  register_write(f, body, 161)
+   accum.cur_pos = accum.cur_pos + i
+   return accum
 end
 
 
@@ -462,8 +481,10 @@ function z0.read()
    return { _opcode = "z0" }
 end
 
-function z0.write(f, body)
-   return register_write0(f, 166)
+function z0.write(f, body, accum)
+   local i =  register_write0(f, 166)
+   accum.cur_pos = accum.cur_pos + i
+   return accum
 end
 
 local z = {
@@ -476,8 +497,10 @@ function z.read(f, cmd)
    return { _opcode = "z", size = size }
 end
 
-function z.write(f, body)
-   return register_write(f, body, 166)
+function z.write(f, body, accum)
+   local i =  register_write(f, body, 166)
+   accum.cur_pos = accum.cur_pos + i
+   return accum 
 end
 
 local fntnum = {
@@ -493,10 +516,11 @@ function fntnum.read(f, cmd)
    return { _opcode = "fntnum", index = index }
 end
 
-function fntnum.write(f, body)
+function fntnum.write(f, body, accum)
    local opcode = 171 + body.index
    write_uint1(f, opcode)
-   return 1
+   accum.cur_pos = accum.cur_pos + 1
+   return accum
 end
 
 local fnt = {
@@ -514,13 +538,14 @@ function fnt.read(f, cmd)
    return { _opcode = "fnt", index = index }
 end
 
-function fnt.write(f, body)
+function fnt.write(f, body, accum)
    local opcode = 234
-   base = opcode_fdnr(body.index)
+   local base = opcode_fdnr(body.index)
    opcode = opcode + base
    write_uint1(f, opcode)
    write_uint[base](f, body.index)
-   return 1 + base
+   accum.cur_pos = accum.cur_pos + (1 + base)
+   return accum
 end
 
 local xxx = {
@@ -535,14 +560,15 @@ function xxx.read(f, cmd)
    return { _opcode = "xxx", size = size, content = content }
 end
 
-function xxx.write(f, body)
+function xxx.write(f, body, accum)
    local opcode = 238
-   base = opcode_snr(body.size)
+   local base = opcode_snr(body.size)
    opcode = opcode + base
    write_uint1(f, opcode)
    write_uint[base](f, body.size)
    f:write(body.content)
-   return 1 + base + length(body.content)
+   accum.cur_pos = accum.cur_pos + (1 + base + length(body.content))
+   return accum
 end
 
 
@@ -575,9 +601,9 @@ function fntdef.read(f, cmd)
             design_size = design_size, area = area, fontname = fontname }
 end
 
-function fntdef.write(f, body)
+function fntdef.write(f, body, accum)
    local opcode = 242
-   base = opcode_fdnr(body.num)
+   local base = opcode_fdnr(body.num)
    opcode = opcode + base
    write_uint1(f, opcode)
    write_uint[base](f, body.num)
@@ -588,7 +614,8 @@ function fntdef.write(f, body)
    write(f, body.area)
    write_uint1(f, length(body.fontname))
    write(f, body.fontname)
-   return 1 + base + 4 + 4 + 4 + 1 + 1 + length(body.area) + length(body.fontname) 
+   accum.cur_pos = accum.cur_pos + (1 + base + 4 + 4 + 4 + 1 + 1 + length(body.area) + length(body.fontname))
+   return accum
 end
 
 Opcodes.pre      = pre

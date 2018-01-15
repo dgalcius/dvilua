@@ -27,15 +27,6 @@ function Dvi.parse(fh)
 end
 
 function Dvi.dump(fh, contents)
-   --[[
-   local cur_pos = 0
-   local stack_level = 0
-   local stack_depth = 0
-   local total_pages = 0
-   local prev_bop = -1
-   local final_post = 0
-   local dvi_version = 0
-   --]]
    -- accumulated values 
    local accum = { cur_pos = 0,
                    stack_level = 0,
@@ -44,7 +35,6 @@ function Dvi.dump(fh, contents)
                    prev_bop = -1,
                    final_post = 0,
                    dvi_version = 0 }
-   print(inspect(accum))
    local contents = contents
    for _, i in pairs(contents) do
       local opcode_name, opcode_body  = i._opcode, i
