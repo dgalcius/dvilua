@@ -1,5 +1,5 @@
-
-
+VERSION:=0.1-0
+PACKAGE:=dvi
 
 default: 01.dt
 	./test01.lua 01.dvi
@@ -18,3 +18,4 @@ default: 01.dt
 
 4:
 	./luadvi.lua dfc.dvi
+
