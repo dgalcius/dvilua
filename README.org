@@ -1,0 +1,48 @@
+#+TITLE: library for parsing/serializing LaTeX DVI file
+
+* Inspired by Ruby dvilib library
+
+* DVI format spec
+
+- https://ctan.org/pkg/dvistd
+
+- ~man~ pages of ~dv2dt~
+
+** Utils
+   - dvitype - translate a dvi file for humans
+   - dviasm - pythons script to assamble/disassamble dvi file
+   - dv2dt - convert a binary TeX DVI file to DTL text representation.
+
+* Examples of use
+
+** Parse DVI file ~~dvi.parse(<filehandle>)~~
+#+BEGIN_SRC lua
+local dvi = require("dvi")
+local dvi_lua_table = dvi.parse(io.open("foo.dvi", 'rb'))
+#+END_SRC
+
+** Serialize DVI file ~~dvi.dump(<filehandle, {table}>)~~
+
+#+BEGIN_SRC lua
+dvi.dump(open("out.dvi", 'wb'), dvi_lua_table)
+#+END_SRC
+
+
+** Inspecting DVI file
+#+BEGIN_SRC lua
+local inspect = require("inspect") -- $ luarocks install inspect
+local dvi = require("dvi")
+
+local dvifilein = arg[1]
+local fh = assert(io.open(dvifilein, 'rb'))
+
+local contents = dvi.parse(fh) -- parse Dvi file into table
+
+print(inspect(contents))       -- Inspect lua table
+
+local dvifileout = 'out.dvi'
+local fout = assert(io.open(dvifileout, 'wb'))
+dvi.dump(fout, contents) -- write table to DVI file
+print("Output written to " .. dvifileout)
+#+END_SRC
+
