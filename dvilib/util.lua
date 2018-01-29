@@ -97,7 +97,7 @@ function opcodebase(size)
    if size < 2^31 then i = 4 end
    if size < 2^23 then i = 3 end
    if size < 2^15 then i = 2 end
-   if size < 2^7 then i = 1 end
+   if size < 2^7  then i = 1 end
    return i
 end
 
@@ -107,7 +107,7 @@ function opcode_mnr(size)
    if size < 2^31 then i = 4 end
    if size < 2^23 then i = 3 end
    if size < 2^15 then i = 2 end
-   if size < 2^7 then i = 1 end
+   if size < 2^7  then i = 1 end
    return i
 end
 
@@ -116,7 +116,7 @@ function opcode_fdnr(size)
    local i = 4 
    if size < 2^24 then i = 3 end
    if size < 2^16 then i = 2 end
-   if size < 2^8 then i = 1 end
+   if size < 2^8  then i = 1 end
    return i
 end
 

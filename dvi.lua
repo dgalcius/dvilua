@@ -8,6 +8,7 @@ function Dvi.parse(fh)
    local c, t = {}, {}
    for _, opcode in pairs(opcodes.basic_opcodes) do
       local s = opcodes[opcode].range
+          -- list
       if type(s) == "table" then
          for _, ss in pairs(s) do
             t[ss] = opcode

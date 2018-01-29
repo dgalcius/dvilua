@@ -8,14 +8,14 @@ local max    = math.max
 local inspect = require("inspect")
 local util    = require("dvilib/util")
 
-local read_int = util.read_int
-local read_uint = util.read_uint
-local write_int = util.write_int
+local read_int   = util.read_int
+local read_uint  = util.read_uint
+local write_int  = util.write_int
 local write_uint = util.write_uint
-local read_int1 = util.read_int1
-local read_int2 = util.read_int2
-local read_int3 = util.read_int3
-local read_int4 = util.read_int4
+local read_int1  = util.read_int1
+local read_int2  = util.read_int2
+local read_int3  = util.read_int3
+local read_int4  = util.read_int4
 local read_uint1 = util.read_uint1
 local read_uint2 = util.read_uint2
 local read_uint3 = util.read_uint3
@@ -24,7 +24,7 @@ local write_uint1 = util.write_uint1
 local write_uint2 = util.write_uint2
 local write_uint3 = util.write_uint3
 local write_uint4 = util.write_uint4
-local readbyte = util.readbyte
+local readbyte    = util.readbyte
 local opcodebase  = util.opcodebase
 local opcode_mnr  = util.opcode_mnr
 local opcode_fnr  = util.opcode_fnr
@@ -69,6 +69,7 @@ function pre.write(f, body, accum)
    write_uint4(f, body.mag)
    write_uint1(f, length(body.comment))
    f:write(body.comment)
+   accum.dvi_version = body.version
    accum.cur_pos = accum.cur_pos + (1 + 1 + 4 + 4 + 4 + 1 + length(body.comment))
    return accum
 end
@@ -110,6 +111,7 @@ function post.write(f, body, accum)
    write_uint4(f, body.u)
    write_uint2(f, accum.stack_depth)
    write_uint2(f, accum.total_pages)
+   accum.final_post = accum.cur_pos
    accum.cur_pos = accum.cur_pos + (1 + 4*6 + 2 + 2)
    return accum
 end
