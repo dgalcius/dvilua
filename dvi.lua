@@ -1,7 +1,7 @@
 local Dvi = Dvi or {}
 
-local inspect = require("inspect")
-local opcodes = require("dvilib/opcodes")
+--local inspect = require("inspect")
+local opcodes = require("dvilib.opcodes")
 local byte = string.byte
 
 function Dvi.parse(fh)

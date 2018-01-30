@@ -1,21 +1,11 @@
 VERSION:=0.1-0
 PACKAGE:=dvi
+TEXMFHOME = $(shell kpsewhich -var-value=TEXMFHOME)
+installdir = $(TEXMFHOME)/scripts/lua/dvi
 
-default: 01.dt
-	./test01.lua 01.dvi
-	dv2dt out.dvi out.dt
 
-01.dt: sample2e.tex
-	latex $<
-	cp sample2e.dvi 01.dvi
-	dv2dt sample2e.dvi 01.dt
-
-02:
-	./test02.lua 01.dvi
-
-3:
-	./luadvi.lua sample2e.dvi
-
-4:
-	./luadvi.lua dfc.dvi
-
+install:
+	mkdir -p $(installdir)
+	mkdir -p $(installdir)/dvilib
+	cp dvi.lua $(installdir)
+	cp dvilib/* $(installdir)/dvilib/

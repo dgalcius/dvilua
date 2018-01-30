@@ -10,7 +10,7 @@ description = {
    license = "GNU GPLv3"
 }
 dependencies = {
-   "lua >= 5.2, < 5.4"
+   "lua >= 5.2"
 }
 
 -- copy_directories = { "doc", "test" }
@@ -18,7 +18,7 @@ dependencies = {
 build = {
    type = "builtin",
    modules = {
-     dvilib = "dvi.lua",
+     dvi = "dvi.lua",
      ["dvilib.opcodes"] = "dvilib/opcodes.lua",
      ["dvilib.util"]    = "dvilib/util.lua",
    }
