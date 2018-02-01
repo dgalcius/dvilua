@@ -103,7 +103,7 @@ function post.write(f, body, accum)
    local opcode = 248
    local final_post = body.final_bop
    write_uint1(f, opcode)
-   write_uint4(f, body.final_bop)
+   write_uint4(f, accum.prev_bop)
    write_uint4(f, body.num)
    write_uint4(f, body.den)
    write_uint4(f, body.mag)
