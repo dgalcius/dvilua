@@ -1,17 +1,17 @@
+
 #+TITLE: library for parsing/serializing LaTeX DVI file
 
-* Inspired by Ruby dvilib library
+ Inspired by Ruby dvilib library
 
 * DVI format spec
 
 - https://ctan.org/pkg/dvistd
-
 - ~man~ pages of ~dv2dt~
 
 ** Utils
    - dvitype - translate a dvi file for humans
-   - dviasm - pythons script to assamble/disassamble dvi file
-   - dv2dt - convert a binary TeX DVI file to DTL text representation.
+   - dviasm - python script to assamble/disassamble dvi file
+   - dv2dt - convert a binary TeX DVI file into text representation.
 
 * Examples of use
 
