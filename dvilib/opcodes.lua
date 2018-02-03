@@ -240,6 +240,28 @@ local put = {
    index = nil,
 }
 
+function put.read(f, cmd)
+   local base = 132
+   local index = 0
+   local n = cmd - base
+   if n < 4 then
+      index = read_uint[n](f)
+   else
+      index = read_int4(f)
+   end
+   return { _opcode = "put", index = index }
+end
+
+function put.write(f, body, accum)
+   local opcode = 127
+   local base = opcode_fnr(body.index)
+   opcode = opcode + base
+   write_uint1(f, opcode)
+   write_uint[base](f, body.index)
+   accum.cur_pos = accum.cur_pos + (1 + base)
+   return accum
+end
+
 local putrule = {
    range = 137,
    height = nil,
@@ -284,7 +306,7 @@ local set = {
 function set.read(f, cmd)
    local base = 127
    local index = 0
-   n = cmd - base
+   local n = cmd - base
    if n < 4 then
       index = read_uint[n](f)
    else
