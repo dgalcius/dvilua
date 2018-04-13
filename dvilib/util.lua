@@ -91,13 +91,13 @@ function write(fh, x)
    fh:write(x)
 end
 
-function opcodebase(size)
+function XXopcodebase(size)
    local size = abs(size)
    local i = 0 
    if size < 2^31 then i = 4 end
    if size < 2^23 then i = 3 end
    if size < 2^15 then i = 2 end
-   if size < 2^7  then i = 1 end
+--   if size < 2^7  then i = 1 end
    return i
 end
 
@@ -107,7 +107,7 @@ function opcode_mnr(size)
    if size < 2^31 then i = 4 end
    if size < 2^23 then i = 3 end
    if size < 2^15 then i = 2 end
-   if size < 2^7  then i = 1 end
+--   if size < 2^7  then i = 1 end
    return i
 end
 
@@ -152,6 +152,7 @@ end
 
 function register_write(f, body, opcode)
    local base = opcode_mnr(body.size)
+--   print("register write body size: ", body.size, base)
    opcode = opcode + base
    write_uint1(f, opcode)
    write_uint[base](f, body.size)

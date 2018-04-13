@@ -25,7 +25,6 @@ local write_uint2 = util.write_uint2
 local write_uint3 = util.write_uint3
 local write_uint4 = util.write_uint4
 local readbyte    = util.readbyte
-local opcodebase  = util.opcodebase
 local opcode_mnr  = util.opcode_mnr
 local opcode_fnr  = util.opcode_fnr
 local opcode_fdnr = util.opcode_fdnr
@@ -375,15 +374,11 @@ function right.read(f, cmd)
 end
 
 function right.write(f, body, accum)
-   local opcode = 142
-   local size = body.size
-   local base = opcodebase(size)
-   opcode = opcode + base
-   write_uint1(f, opcode)
-   write_uint[base](f, size)
-   accum.cur_pos = accum.cur_pos + (1 + base)
+   local i = register_write(f, body, 142)
+   accum.cur_pos = accum.cur_pos + i
    return accum
 end
+
 
 local w0 = {
    range = 147
