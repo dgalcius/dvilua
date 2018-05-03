@@ -91,16 +91,6 @@ function write(fh, x)
    fh:write(x)
 end
 
-function XXopcodebase(size)
-   local size = abs(size)
-   local i = 0 
-   if size < 2^31 then i = 4 end
-   if size < 2^23 then i = 3 end
-   if size < 2^15 then i = 2 end
---   if size < 2^7  then i = 1 end
-   return i
-end
-
 function opcode_mnr(size)
    local size = abs(size)
    local i = 0

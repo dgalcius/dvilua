@@ -1,6 +1,6 @@
 local Dvi = Dvi or {}
 
-local inspect = require("inspect")
+-- local inspect = require("inspect")
 local opcodes = require("dvilib.opcodes")
 local byte = string.byte
 
@@ -38,7 +38,7 @@ function Dvi.dump(fh, contents)
                    dvi_version = 0 }
    local contents = contents
    for _, i in pairs(contents) do
-      print(inspect(i))
+--      print(inspect(i))
       local opcode_name, opcode_body  = i._opcode, i
       accum = opcodes[opcode_name].write(fh, opcode_body, accum)
    end
